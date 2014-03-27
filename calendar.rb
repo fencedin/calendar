@@ -16,7 +16,7 @@ end
 
 def main
   puts "Enter [1] to add a new event"
-  puts "      [2] to list all events"
+  puts "      [2] to list events"
   puts "      [3] to edit an event"
   puts "      [4] to delete an event"
   puts "      [5] to exit"
@@ -77,6 +77,8 @@ def add_another(method_name)
   puts "Would you like to add another (y/n)?"
   user_input = gets.chomp
   if user_input == 'y'
+    clear
+    list_event
     method(method_name).call
   else
     clear
@@ -89,7 +91,8 @@ def list_event
   puts '=================================================================================='
   puts "\e[36mDescription         Location       Start Date & Time  -  End Date &   Time   ID"
   puts '----------------------------------------------------------------------------------'
-  Event.all.each_with_index do |event, index|
+  @events_by_date = Event.where("start_dt >= ?", Date.today).order(start_dt: :asc, start_tm: :asc)
+  @events_by_date.each_with_index do |event, index|
     puts "#{event.description}" + " "*(20-event.description.length) +
          "#{event.location}" + " "*(15-event.location.length) +
          "#{event.start_dt.strftime("%b %d, %y")}" + " "*(13-event.start_dt.to_s.length) +
@@ -103,15 +106,16 @@ end
 def edit_event
   puts "Select the event by ID that you would like to edit."
   user_input = gets.chomp.to_i
-  @current_event = Event.all[user_input-1]
+  @current_event = @events_by_date[user_input-1]
   puts "Choose what you would like to edit by number."
-  list_columns(Event.all)
+  list_columns(@events_by_date)
   column_choice = gets.chomp.to_i
   puts "Enter the updated information:"
   update = gets.chomp
   column = @table_columns[column_choice-1]
   @current_event.update({:"#{column}" => update})
   puts "#{@current_event.description} has had the #{column} updated"
+  clear
   main
 end
 
@@ -125,7 +129,7 @@ end
 def delete_event
   puts "Select the event by ID that you would like to delete."
   user_input = gets.chomp.to_i
-  Event.all[user_input-1].destroy
+  @events_by_date[user_input-1].destroy
   clear
   puts "Event removed from your calendar."
   main
