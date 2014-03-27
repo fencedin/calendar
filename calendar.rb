@@ -1,9 +1,7 @@
 require 'bundler/setup'
+Bundler.require(:default)
 
-require 'active_record'
-require './lib/event'
-
-Dir[File.dirname(__FILE__) + './lib/*.rb'].each { |file| require file }
+Dir[File.dirname(__FILE__) + '/lib/*.rb'].each { |file| require file }
 
 ActiveRecord::Base.establish_connection(YAML::load(File.open('./db/config.yml'))["development"])
 
@@ -16,10 +14,13 @@ end
 
 def main
   puts "Enter [1] to add a new event"
-  puts "      [2] to list events"
-  puts "      [3] to edit an event"
-  puts "      [4] to delete an event"
-  puts "      [5] to exit"
+  puts "      [2] to list all current events"
+  puts "      [3] to list todays events"
+  puts "      [4] to list events by week"
+  puts "      [5] to list events by month"
+  puts "      [6] to edit an event"
+  puts "      [7] to delete an event"
+  puts "      [8] to exit\e[0m"
   choice = nil
   until choice == '5'
     choice = gets.chomp
@@ -28,17 +29,36 @@ def main
       add_event
     when '2'
       clear
+      @event_array = Event.current
       list_event
       main
     when '3'
       clear
+      @type = "day"
+      @event_array = Event.day
       list_event
-      edit_event
+      prev_next
     when '4'
       clear
+      @type = "week"
+      @event_array = Event.week
+      list_event
+    when '5'
+      clear
+      @type = "month"
+      @event_array = Event.month
+      list_event
+    when '6'
+      clear
+      @event_array = Event.current
+      list_event
+      edit_event
+    when '7'
+      clear
+      @event_array = Event.current
       list_event
       delete_event
-    when '5'
+    when '8'
       clear
       puts "Goodbye"
       exit
@@ -91,24 +111,23 @@ def list_event
   puts '=================================================================================='
   puts "\e[36mDescription         Location       Start Date & Time  -  End Date &   Time   ID"
   puts '----------------------------------------------------------------------------------'
-  @events_by_date = Event.where("start_dt >= ?", Date.today).order(start_dt: :asc, start_tm: :asc)
-  @events_by_date.each_with_index do |event, index|
+  @event_array.each_with_index do |event, index|
     puts "#{event.description}" + " "*(20-event.description.length) +
          "#{event.location}" + " "*(15-event.location.length) +
          "#{event.start_dt.strftime("%b %d, %y")}" + " "*(13-event.start_dt.to_s.length) +
          "#{event.start_tm.strftime("%H:%M")} -" + " "*(24-event.start_tm.to_s.length) +
          " #{event.end_dt.strftime("%b %d, %y")}" + " "*(13-event.end_dt.to_s.length) +
          "#{event.end_tm.strftime("%H:%M")}" + "   " + "#{index+1}"
-  end
+   end
   puts "\e[0m"
 end
 
 def edit_event
   puts "Select the event by ID that you would like to edit."
   user_input = gets.chomp.to_i
-  @current_event = @events_by_date[user_input-1]
+  @current_event = @event_array[user_input-1]
   puts "Choose what you would like to edit by number."
-  list_columns(@events_by_date)
+  list_columns(@event_array)
   column_choice = gets.chomp.to_i
   puts "Enter the updated information:"
   update = gets.chomp
@@ -129,13 +148,33 @@ end
 def delete_event
   puts "Select the event by ID that you would like to delete."
   user_input = gets.chomp.to_i
-  @events_by_date[user_input-1].destroy
+  @event_array[user_input-1].destroy
   clear
   puts "Event removed from your calendar."
   main
 end
 
+def prev_next
+  puts "Select [p]revious to see the previous or"
+  puts "       [n]ext to see the next"
+  puts "       [b]ack to go to main menu"
+  case gets.chomp
+  when 'p'
+    clear
+    something = "previous_" + @type
+    @event_array = Event.method(something).call
+    binding.pry
+    list_event
+  when 'n'
 
+  when 'b'
+
+  else
+    clear
+    puts "Invalid input"
+    prev_next
+  end
+end
 
 
 
