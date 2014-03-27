@@ -1,5 +1,11 @@
 class Event < ActiveRecord::Base
 
+  validates :description, :presence => true, :length => { :maximum => 20 }
+  validates :location, :presence => true, :length => { :maximum => 15 }
+  validates :start_dt, :presence => true
+  validates :start_tm, :presence => true
+  validates :end_dt, :presence => true
+  validates :end_tm, :presence => true
 
   def self.list_by(condition)
     Event.where(condition).order(start_dt: :asc, start_tm: :asc)

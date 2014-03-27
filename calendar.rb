@@ -87,10 +87,16 @@ def add_event
   event = Event.new({description: desc, location: location,
                      start_dt: start_dt, start_tm: start_tm,
                      end_dt: end_dt, end_tm: end_tm})
-  event.save
-  clear
-  puts "#{desc} has been added."
-  add_another("add_event")
+  if event.save
+    puts "'#{desc}' has been added."
+    clear
+    add_another("add_event")
+  else
+    clear
+    event.errors.full_messages.each { |message| puts "\e[5;31m"+message+"\e[0;0m" }
+    puts "\n"
+    main
+  end
 end
 
 def add_another(method_name)
